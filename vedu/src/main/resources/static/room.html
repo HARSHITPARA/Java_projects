@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vedu | Live Classroom Max</title>
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <style>
+        /* CSS remains identical to the previous version */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #0f172a; color: white; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        #video-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); grid-auto-rows: min-content; gap: 20px; padding: 20px; overflow-y: auto; align-content: start; }
+        .video-container { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden; background: #1e293b; border: 2px solid rgba(255, 255, 255, 0.1); transition: all 0.4s ease; }
+        .video-container.featured { grid-column: 1 / -1; aspect-ratio: auto; height: 70vh; border-color: #3c52ff; }
+        video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+        .mirror { transform: scaleX(-1); }
+        .name-label { position: absolute; bottom: 15px; left: 15px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); padding: 5px 12px; border-radius: 10px; font-size: 13px; z-index: 10; }
+        .pin-btn { position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px; border-radius: 8px; cursor: pointer; z-index: 10; opacity: 0.6; }
+        .controls { height: 90px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: center; gap: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .btn { width: 50px; height: 50px; border-radius: 50%; border: none; background: rgba(255, 255, 255, 0.1); color: white; font-size: 18px; cursor: pointer; transition: 0.3s; }
+        .btn.off { background: #ff4757; }
+        .leave { background: #ff4757 !important; width: 100px; border-radius: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="video-grid"></div>
+
+<div class="controls">
+    <button class="btn" id="mic-btn" onclick="toggleMic()">🎤</button>
+    <button class="btn" id="cam-btn" onclick="toggleCam()">📹</button>
+    <button class="btn" id="screen-btn" onclick="toggleScreenShare()">📺</button>
+    <button class="btn leave" onclick="leaveSession()">LEAVE</button>
+</div>
+
+<script>
+    let currentRoom;
+    const LKC = window.LivekitClient;
+
+    async function init() {
+        const token = localStorage.getItem("openvidu_token");
+        if (!token) return window.location.href = "/";
+
+        const url = `wss://10-234-130-95.openvidu-local.dev:7443`;
+
+        currentRoom = new LKC.Room({
+            adaptiveStream: true,
+            dynacast: true,
+            // MAX QUALITY: Set global capture to 1080p
+            videoCaptureDefaults: {
+                resolution: LKC.VideoPresets.h1080.resolution,
+            },
+            publishDefaults: {
+                videoSimulcast: true,
+                videoEncoding: LKC.VideoPresets.h1080.encoding,
+                screenShareEncoding: LKC.VideoPresets.h1080.encoding,
+            }
+        });
+
+        currentRoom.on(LKC.RoomEvent.TrackSubscribed, (track, publication, participant) => {
+            if (track.kind === 'video') {
+                attachVideo(track, participant.identity, publication.source === LKC.Track.Source.ScreenShare);
+            } else { track.attach(); }
+        });
+
+        currentRoom.on(LKC.RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+            if (track.kind === 'video' && publication.source === LKC.Track.Source.ScreenShare) {
+                const screenCont = document.getElementById(`container-screen-${participant.identity}`);
+                if (screenCont) screenCont.remove();
+            }
+        });
+
+        currentRoom.on(LKC.RoomEvent.LocalTrackUnpublished, (pub) => {
+            if (pub.source === LKC.Track.Source.ScreenShare) {
+                const cont = document.getElementById(`container-screen-${currentRoom.localParticipant.identity}`);
+                if (cont) cont.remove();
+                document.getElementById('screen-btn').classList.remove('off');
+            }
+        });
+
+        try {
+            await currentRoom.connect(url, token);
+
+            const mic = localStorage.getItem("vedu_mic_pref") !== "false";
+            const cam = localStorage.getItem("vedu_cam_pref") !== "false";
+
+            await currentRoom.localParticipant.setMicrophoneEnabled(mic);
+
+            if (cam) {
+                // MAX QUALITY: Force Camera to 1080p
+                await currentRoom.localParticipant.setCameraEnabled(true, {
+                    resolution: LKC.VideoPresets.h1080.resolution,
+                    simulcast: true,
+                });
+                const pub = currentRoom.localParticipant.getTrackPublication(LKC.Track.Source.Camera);
+                if (pub?.videoTrack) attachVideo(pub.videoTrack, currentRoom.localParticipant.identity, false);
+            }
+        } catch (e) { console.error("Connection failed", e); }
+    }
+
+    async function toggleScreenShare() {
+        try {
+            const isEnabled = !currentRoom.localParticipant.isScreenShareEnabled;
+            // MAX QUALITY: Screen share remains 1080p but with text optimization
+            await currentRoom.localParticipant.setScreenShareEnabled(isEnabled, {
+                resolution: LKC.VideoPresets.h1080.resolution,
+                contentHint: 'text',
+            });
+            const btn = document.getElementById('screen-btn');
+            btn.classList.toggle('off', isEnabled);
+
+            if (isEnabled) {
+                const pub = currentRoom.localParticipant.getTrackPublication(LKC.Track.Source.ScreenShare);
+                if (pub?.videoTrack) attachVideo(pub.videoTrack, currentRoom.localParticipant.identity, true);
+            }
+        } catch (e) { console.error("Screen share error", e); }
+    }
+
+    /* Core UI functions remain the same for stability */
+    function attachVideo(track, identity, isScreenShare = false) {
+        const containerId = isScreenShare ? `container-screen-${identity}` : `container-${identity}`;
+        let container = document.getElementById(containerId);
+        if (!container) {
+            container = document.createElement('div');
+            container.className = `video-container ${isScreenShare ? 'featured pinned' : ''}`;
+            container.id = containerId;
+            container.innerHTML = `<div class="name-label">${isScreenShare ? identity + "'s Screen" : identity}</div><button class="pin-btn" onclick="togglePin('${containerId}')">📌</button>`;
+            const grid = document.getElementById('video-grid');
+            isScreenShare ? grid.prepend(container) : grid.appendChild(container);
+        }
+        const videoEl = track.attach();
+        if (!isScreenShare) videoEl.classList.add('mirror');
+        const oldVideo = container.querySelector('video');
+        if (oldVideo) oldVideo.remove();
+        container.appendChild(videoEl);
+    }
+
+    function togglePin(id) {
+        const el = document.getElementById(id);
+        const isPinned = el.classList.contains('featured');
+        document.querySelectorAll('.video-container').forEach(c => c.classList.remove('featured', 'pinned'));
+        if (!isPinned) el.classList.add('featured', 'pinned');
+    }
+
+    function toggleMic() {
+        const active = !currentRoom.localParticipant.isMicrophoneEnabled;
+        currentRoom.localParticipant.setMicrophoneEnabled(active);
+        document.getElementById('mic-btn').innerText = active ? '🎤' : '🔇';
+    }
+
+    function toggleCam() {
+        const active = !currentRoom.localParticipant.isCameraEnabled;
+        currentRoom.localParticipant.setCameraEnabled(active);
+        document.getElementById('cam-btn').innerText = active ? '📹' : '🚫';
+        const id = currentRoom.localParticipant.identity;
+        if (!active) document.getElementById(`container-${id}`)?.remove();
+        else {
+            const pub = currentRoom.localParticipant.getTrackPublication(LKC.Track.Source.Camera);
+            if(pub?.videoTrack) attachVideo(pub.videoTrack, id, false);
+        }
+    }
+
+    async function leaveSession() {
+        if (confirm("Leave Class?")) {
+            await currentRoom.disconnect();
+            window.location.href = "/";
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
