@@ -2,9 +2,6 @@ services:
   vedu:
     build: .
     container_name: vedu-javabackend
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
     environment:
       - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
       - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET} # Use the correct key name
@@ -14,6 +11,12 @@ services:
       - spring_datasource_url=${SPRING_DATASOURCE_URL}
       - spring_datasource_username=${SPRING_DATASOURCE_USERNAME}
       - spring_datasource_password=${SPRING_DATASOURCE_PASSWORD}
+      - Livekit_url=http://openvidu:7880
+      - OPENVIDU_SECRET=${LIVEKIT_API_SECRET}
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
+      - LAN_PRIVATE_IP=${LAN_PRIVATE_IP}
+    ports:
+      - 8080:8080
     depends_on:
       setup:
         condition: service_completed_successfully
