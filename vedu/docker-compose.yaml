@@ -2,17 +2,18 @@ services:
   vedu:
     build: .
     container_name: vedu-javabackend
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     environment:
       - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
-      - OPENVIDU_SECRET=${LIVEKIT_API_SECRET}
-
-      - supabase.url=${SUPABASE_URL}
-      - supabase.anon.key=${SUPABASE_ANON_KEY}
-      - supabase.jwt.secret=${SUPABASE_JWT_SECRETS}
-
-      - spring.datasource.url=${SPRING_DATASOURCE_URL}
-      - spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
-      - spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET} # Use the correct key name
+      - supabase_url=${SUPABASE_URL}
+      - supabase_anon_key=${SUPABASE_ANON_KEY}
+      - supabase_jwt_secret=${SUPABASE_JWT_SECRETS} # Ensure this is the actual SECRET string
+      - spring_datasource_url=${SPRING_DATASOURCE_URL}
+      - spring_datasource_username=${SPRING_DATASOURCE_USERNAME}
+      - spring_datasource_password=${SPRING_DATASOURCE_PASSWORD}
     depends_on:
       setup:
         condition: service_completed_successfully
