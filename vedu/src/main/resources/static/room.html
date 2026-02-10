@@ -160,11 +160,27 @@
     }
 
     async function leaveSession() {
-        if (confirm("Leave Class?")) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomName = urlParams.get('room');
+        const role = localStorage.getItem('role');
+
+        if (confirm("Leave the classroom?")) {
             await currentRoom.disconnect();
+            if(role==="teacher"){
+                try {
+                    await fetch("/api/meetings/end_room",{
+                        method: 'POST',
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({roomName : roomName})
+                    })
+                }catch (error){
+                    console.error("failed to close room", error);
+                }
+            }
             window.location.href = "/";
         }
     }
+
 
     window.onload = init;
 </script>
