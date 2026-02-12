@@ -1,36 +1,36 @@
 services:
-  caddy-proxy:
-    image: docker.io/openvidu/openvidu-caddy-local:3.5.0
-    container_name: caddy-proxy
-    restart: unless-stopped
-    extra_hosts:
-      - host.docker.internal:host-gateway
-    environment:
-      - LAN_DOMAIN=${LAN_DOMAIN:-}
-      - LAN_PRIVATE_IP=${LAN_PRIVATE_IP:-}
-      - LAN_MODE=${LAN_MODE:-false}
-      - USE_HTTPS=${USE_HTTPS:-false}
-      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-}
-      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-}
-      - DASHBOARD_ADMIN_USERNAME=${DASHBOARD_ADMIN_USERNAME:-}
-      - DASHBOARD_ADMIN_PASSWORD=${DASHBOARD_ADMIN_PASSWORD:-}
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-}
-      - MEET_INITIAL_ADMIN_USER=${MEET_INITIAL_ADMIN_USER:-}
-      - MEET_INITIAL_ADMIN_PASSWORD=${MEET_INITIAL_ADMIN_PASSWORD:-}
-      - MEET_INITIAL_API_KEY=${MEET_INITIAL_API_KEY:-}
-    volumes:
-      - ./custom-layout:/var/www/custom-layout
-      - /etc/localtime:/etc/localtime:ro
-    ports:
-      - 5443:5443
-      - 6443:6443
-      - 7443:7443
-      - 7880:7880
-      - 9443:9443
-    depends_on:
-      setup:
-        condition: service_completed_successfully
+##  caddy-proxy:
+#    image: docker.io/openvidu/openvidu-caddy-local:3.5.0
+#    container_name: caddy-proxy
+#    restart: unless-stopped
+#    extra_hosts:
+#      - host.docker.internal:host-gateway
+#    environment:
+#      - LAN_DOMAIN=${LAN_DOMAIN:-}
+#      - LAN_PRIVATE_IP=${LAN_PRIVATE_IP:-}
+#      - LAN_MODE=${LAN_MODE:-false}
+#      - USE_HTTPS=${USE_HTTPS:-false}
+#      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-}
+#      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-}
+#      - DASHBOARD_ADMIN_USERNAME=${DASHBOARD_ADMIN_USERNAME:-}
+#      - DASHBOARD_ADMIN_PASSWORD=${DASHBOARD_ADMIN_PASSWORD:-}
+#      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-}
+#      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-}
+#      - MEET_INITIAL_ADMIN_USER=${MEET_INITIAL_ADMIN_USER:-}
+#      - MEET_INITIAL_ADMIN_PASSWORD=${MEET_INITIAL_ADMIN_PASSWORD:-}
+#      - MEET_INITIAL_API_KEY=${MEET_INITIAL_API_KEY:-}
+#    volumes:
+#      - ./custom-layout:/var/www/custom-layout
+#      - /etc/localtime:/etc/localtime:ro
+#    ports:
+#      - 5443:5443
+#      - 6443:6443
+#      - 7443:7443
+#      - 7880:7880
+#      - 9443:9443
+#    depends_on:
+#      setup:
+#        condition: service_completed_successfully
 
   redis:
     image: docker.io/redis:8.2.2-alpine
@@ -99,6 +99,8 @@ services:
       - ADMIN_USERNAME=${DASHBOARD_ADMIN_USERNAME:-}
       - ADMIN_PASSWORD=${DASHBOARD_ADMIN_PASSWORD:-}
       - DATABASE_URL=mongodb://${MONGO_ADMIN_USERNAME}:${MONGO_ADMIN_PASSWORD}@mongo:27017/?replicaSet=rs0&readPreference=primaryPreferred
+    ports:
+      - 5000:5000
     volumes:
       - /etc/localtime:/etc/localtime:ro
     depends_on:
@@ -114,8 +116,11 @@ services:
     environment:
       - LAN_PRIVATE_IP=${LAN_PRIVATE_IP:-}
       - LAN_MODE=${LAN_MODE:-false}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-}
     ports:
       - 3478:3478/udp
+      - 7880:7880
       - 7881:7881/tcp
       - 7900-7999:7900-7999/udp
     entrypoint: /bin/sh /scripts/entrypoint.sh

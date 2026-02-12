@@ -22,6 +22,8 @@ redis:
     use_tls: false
 turn:
     enabled: true
+    domain: ${DOMAIN_NAME}
+    external_ip: ${LAN_PRIVATE_IP}
     udp_port: 3478
     relay_range_start: 40000
     relay_range_end: 50000
