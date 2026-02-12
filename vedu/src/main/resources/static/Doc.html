@@ -90,10 +90,10 @@
         <p>The system utilizes a <strong>Service-Oriented Architecture (SOA)</strong>.</p>
 
         <h3>Connection Handshake</h3>
-        <p>1. Client signs in via Supabase Auth.<br>
-            2. Client hits Spring Boot `/api/meetings/token` with Room Name.<br>
-            3. Spring Boot verifies roles and requests Token from LiveKit.<br>
-            4. Client uses JWT to open a WebSocket (WSS) to the Media Server.</p>
+        <p>1.<strong>Auth: </strong>Client signs in via Supabase Auth.<br>
+            2.<strong>Token allocation: </strong> Client hits Spring Boot `/api/meetings/token` with Room Name.<br>
+            3.<strong>Token Verification: </strong> Spring Boot verifies roles and requests Token from LiveKit.<br>
+            4.<strong>Room Creation: </strong> Client uses JWT to open a WebSocket (WSS) to the Media Server.</p>
     </div>
 </section>
 
@@ -102,29 +102,73 @@
         <h2>05. Development Timeline (Gantt Chart)</h2>
         <p>A 12-week iterative development cycle (SDLC - Agile).</p>
         <table class="data-table">
-            <tr><th>Phase</th><th>Weeks</th><th>Deliverable</th></tr>
-            <tr><td>Requirement Analysis</td><td>1-2</td><td>SRS Document</td></tr>
-            <tr><td>Backend Dev (Spring/Auth)</td><td>3-5</td><td>REST APIs & Supabase Integration</td></tr>
-            <tr><td>RTC Integration (LiveKit)</td><td>6-8</td><td>Signaling & Media Streams</td></tr>
-            <tr><td>Liquid UI Deployment</td><td>9-10</td><td>Responsive Dashboards</td></tr>
-            <tr><td>Testing & Optimization</td><td>11-12</td><td>Final Deployment & Manuals</td></tr>
+            <tr><th>Phase</th><th>Day</th><th>Deliverable</th></tr>
+            <tr><td>Requirement Analysis</td><td>1st</td><td>SRS Document</td></tr>
+            <tr><td>Backend Dev (Spring/Auth)</td><td>2-4th</td><td>REST APIs & Supabase Integration</td></tr>
+            <tr><td>RTC Integration (LiveKit)</td><td>5-8th</td><td>Signaling & Media Streams</td></tr>
+            <tr><td>Docker Deployment</td><td>9th</td><td>Responsive Dashboards</td></tr>
+            <tr><td>Testing & Optimization</td><td>10th</td><td>Final Deployment & Manuals</td></tr>
         </table>
     </div>
 </section>
 
-<section id="s6">
+<section class="glass-card" id="s6">
     <div class="content-box">
         <h2>06. Data Dictionary</h2>
         <table class="data-table">
             <thead>
-            <tr><th>Attribute</th><th>Data Type</th><th>Description</th></tr>
+            <tr>
+                <th>Table</th>
+                <th>Column</th>
+                <th>Data Type</th>
+                <th>Description</th>
+            </tr>
             </thead>
-            <tr><td>user_id</td><td>UUID</td><td>Primary Key from Auth.users</td></tr>
-            <tr><td>user_type</td><td>TEXT</td><td>Used for Storing Usertype</td></tr>
-            <tr><td>full_name</td><td>VARCHAR(100)</td><td>Displayed on Video Label</td></tr>
-            <tr><td>room_token</td><td>TEXT</td><td>Temporary LiveKit Session Token</td></tr>
-            <tr><td>access_token</td><td>TEXT</td><td>Temporary user Session Token</td></tr>
-            <tr><td>is_teacher</td><td>BOOLEAN</td><td>Role check for classroom controls</td></tr>
+            <tbody>
+            <tr>
+                <td rowspan="2"><strong>auth.users</strong></td>
+                <td><code>id</code></td>
+                <td>UUID (PK)</td>
+                <td>Unique User ID (Supabase Managed)</td>
+            </tr>
+            <tr>
+                <td><code>email</code></td>
+                <td>VARCHAR</td>
+                <td>User's unique login credentials</td>
+            </tr>
+
+            <tr>
+                <td rowspan="6"><strong>public.profiles</strong></td>
+                <td><code>id</code></td>
+                <td>UUID (FK)</td>
+                <td>Primary Key; links directly to <em>auth.users.id</em></td>
+            </tr>
+            <tr>
+                <td><code>user_type</code></td>
+                <td>VARCHAR</td>
+                <td>Role discriminator: 'teacher' or 'student'</td>
+            </tr>
+            <tr>
+                <td><code>full_name</code></td>
+                <td>VARCHAR(100)</td>
+                <td>Name displayed on video labels and UI</td>
+            </tr>
+            <tr>
+                <td><code>room_token</code></td>
+                <td>TEXT</td>
+                <td>Temporary LiveKit session token</td>
+            </tr>
+            <tr>
+                <td><code>access_token</code></td>
+                <td>TEXT</td>
+                <td>Temporary user session token</td>
+            </tr>
+            <tr>
+                <td><code>is_teacher</code></td>
+                <td>BOOLEAN</td>
+                <td>Role check for classroom moderation controls</td>
+            </tr>
+            </tbody>
         </table>
     </div>
 </section>
@@ -134,40 +178,28 @@
         <h2>07. Data Flow Diagram (DFD)</h2>
         <p><strong>Level 0 DFD:</strong> Illustrates how the Participant data flows from the UI through the Spring Gateway to the Media Engine.</p>
         <div class="diagram-placeholder">
-            <img src="assests/mermaid-diagram-2026-02-04-145559.png">
+            <img src="assests/dfd.png">
             <br>
             <span style="font-size: 12px; color: #94a3b8;">Flow: User -> Login API -> Room Token API -> Media Stream Engine</span>
         </div>
 
     </div>
 </section>
+
 
 <section id="s8">
-    <div class="content-box">
-        <h2>07. Data Flow Diagram (DFD)</h2>
-        <p><strong>Level 1 DFD:</strong> Illustrates how the Participant data flows from the UI through the Spring Gateway to the Media Engine.</p>
-        <div class="diagram-placeholder">
-            <img src="assests/mermaid-diagram-2026-02-04-145317.png">
-            <br>
-            <span style="font-size: 12px; color: #94a3b8;">Flow: User -> Login API -> Room Token API -> Media Stream Engine</span>
-        </div>
-
-    </div>
-</section>
-
-<section id="s9">
     <div class="content-box">
         <h2>08. Entity Relationship Diagram (ERD)</h2>
         <p><strong>Schema Logic:</strong> One Teacher manages many Courses. One Course has many Sessions. Sessions generate multiple Attendance records.</p>
         <div class="diagram-placeholder">
-            <img src="assests/mermaid-diagram-2026-02-04-144848.png" alt=""><br>
+            <img src="assests/er.png" alt=""><br>
             <span style="font-size: 12px; color: #94a3b8;">Entities: Users, Courses, Meetings, Attendance, Recordings</span>
         </div>
 
     </div>
 </section>
 
-<section id="s10">
+<section id="s9">
     <div class="content-box">
         <h2>10. Expected Report Generation</h2>
         <p>The system provides automated reporting for educational auditing:</p>
@@ -179,7 +211,7 @@
     </div>
 </section>
 
-<section id="s11">
+<section id="s10">
     <div class="content-box">
         <h2>11 & 12. Future Scope & Bibliography</h2>
         <h3>Future Scope</h3>
